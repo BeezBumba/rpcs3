@@ -1693,24 +1693,31 @@ error_code AudioSetNotifyEventQueue(ppu_thread& ppu, u64 key, u32 iFlags)
 
 		bool was_mxr000_queue_found = false;
 
-		for (usz count = 0; has_sur_mixer_thread && count < 100; count++)
-		{
-			if (lv2_event_queue::find(c_mxr000))
-			{
-				was_mxr000_queue_found = true;
-				break;
-			}
+		// Correct: check for thread existence inside the loop on every iteration
+for (usz count = 0; count < 100; count++)
+{
+    if (lv2_event_queue::find(c_mxr000))
+    {
+        was_mxr000_queue_found = true;
+        break;
+    }
 
-			if (ppu.is_stopped())
-			{
-				ppu.state += cpu_flag::again;
-				return {};
-			}
+    // Check if the thread exists yet; if it never appears, bail out
+    const bool thread_exists = idm::select<named_thread<ppu_thread>>([&](u32 id, named_thread<ppu_thread>& t)
+    {
+        if (id == ppu.id) return false;
+        const auto ptr = t.ppu_tname.load();
+        return ptr && *ptr == "_cellsurMixerMain"sv;
+    }).ret;
 
-			(count < 3 ? cellAudio.warning : cellAudio.error)("AudioSetNotifyEventQueue(): Waiting for _mxr000. x%d", count);
+    if (!thread_exists && count > 3)
+        break; // Thread was never created, no point waiting
 
-			lv2_sleep(50'000, &ppu);
-		}
+    if (ppu.is_stopped()) { ppu.state += cpu_flag::again; return {}; }
+    (count < 3 ? cellAudio.warning : cellAudio.error)("AudioSetNotifyEventQueue(): Waiting for _mxr000. x%d", count);
+    lv2_sleep(50'000, &ppu);
+}
+
 
 		if (key == 0 && was_mxr000_queue_found)
 		{
