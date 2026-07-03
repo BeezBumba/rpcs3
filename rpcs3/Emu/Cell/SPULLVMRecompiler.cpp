@@ -7808,10 +7808,16 @@ public:
 
 	value_t<f32[4]> clamp_smax(value_t<f32[4]> v, u32 gpr = s_reg_max)
 	{
-		if (m_reduced_loop_info && gpr < s_reg_max && m_reduced_loop_info->is_gpr_not_NaN_hint(gpr))
-		{
-			return v;
-		}
+		#if !defined(ARCH_ARM64)
+// On ARM64 the NEON backend cannot guarantee safe handling of SPU extended-range
+// values (exponent=255) when clamping is skipped, causing crashes in the optimized
+// reduced-loop path. The clamp is required to map SPU Smax (0x7FFFFFFF) into the
+// host's representable finite range per the SPU ISA spec (Section 9.1).
+if (m_reduced_loop_info && gpr < s_reg_max && m_reduced_loop_info->is_gpr_not_NaN_hint(gpr))
+{
+    return v;
+}
+#endif
 
 		if (m_use_avx512)
 		{
