@@ -628,7 +628,7 @@ namespace vk
 		if (!pgpu->features.shaderClipDistance)
 		{
 			rsx_log.error("Your GPU does not support shader clip distance. Graphics will not render correctly.");
-			enabled_features.shaderClipDistance = VK_FALSE;
+			enabled_features.shaderClipDistance = VK_TRUE;
 		}
 
 		if (!pgpu->features.shaderStorageBufferArrayDynamicIndexing)
