@@ -73,19 +73,31 @@ namespace aarch64
         { 0x41, 0xd23, "armv8.1-m.main+pacbti+mve.fp+fp.dp", "", "Cortex-M85" },
         { 0x41, 0xd13, "armv8-r+crc+simd", "", "Cortex-R52" },
         { 0x41, 0xd16, "armv8-r+crc+simd", "", "Cortex-R52+" },
+        { 0x41, 0xd46, "armv9-a+fp16+bf16+i8mm", "", "Cortex-A510" },
+        { 0x41, 0xd48, "armv9-a+fp16+bf16+i8mm", "", "Cortex-X2" },
+        { 0x41, 0xd4d, "armv9-a+fp16+bf16+i8mm", "", "Cortex-A715" },
+        { 0x41, 0xd4e, "armv9-a+fp16+bf16+i8mm", "", "Cortex-X3" },
+        { 0x41, 0xd4f, "armv9-a+fp16+bf16+i8mm", "", "Neoverse-V2" },
+        { 0x41, 0xd80, "armv9.2-a+fp16+bf16+i8mm", "", "Cortex-A520" },
+        { 0x41, 0xd81, "armv9.2-a+fp16+bf16+i8mm", "", "Cortex-A720" },
+        { 0x41, 0xd82, "armv9.2-a+fp16+bf16+i8mm", "", "Cortex-X4" },
+        { 0x41, 0xd84, "armv9.2-a+fp16+bf16+i8mm", "", "Neoverse-V3" },
+        { 0x41, 0xd85, "armv9.2-a+fp16+bf16+i8mm", "", "Cortex-X925" },
+        { 0x41, 0xd87, "armv9.2-a+fp16+bf16+i8mm", "", "Cortex-A725" },
+        { 0x41, 0xd8e, "armv9.2-a+fp16+bf16+i8mm", "", "Neoverse-N3" },
 
-        // APPLE
-        { 0x61, 0x22, "armv8.5-a", "M1", "Firestorm" },
-        { 0x61, 0x23, "armv8.5-a", "M1", "IceStorm" },
-        { 0x61, 0x28, "armv8.5-a", "M1 Max", "Firestorm" },
-        { 0x61, 0x29, "armv8.5-a", "M1 Max", "Icestorm" },
-        { 0x61, 0x24, "armv8.5-a", "M1 Pro", "Firestorm" },
-        { 0x61, 0x25, "armv8.5-a", "M1 Pro", "Icestorm" },
-        { 0x61, 0x32, "armv8.5-a", "M2", "Avalanche" },
-        { 0x61, 0x33, "armv8.5-a", "M2", "Blizzard" },
+        // APPLE (name is the LLVM -mcpu id here, not the core codename, since P/E cores share one model)
+        { 0x61, 0x22, "armv8.5-a", "M1", "apple-m1" },
+        { 0x61, 0x23, "armv8.5-a", "M1", "apple-m1" },
+        { 0x61, 0x28, "armv8.5-a", "M1 Max", "apple-m1" },
+        { 0x61, 0x29, "armv8.5-a", "M1 Max", "apple-m1" },
+        { 0x61, 0x24, "armv8.5-a", "M1 Pro", "apple-m1" },
+        { 0x61, 0x25, "armv8.5-a", "M1 Pro", "apple-m1" },
+        { 0x61, 0x32, "armv8.5-a", "M2", "apple-m2" },
+        { 0x61, 0x33, "armv8.5-a", "M2", "apple-m2" },
 
         // QUALCOMM
-        { 0x51, 0x01, "armv8.5-a", "Snapdragon", "X-Elite" },
+        { 0x51, 0x01, "armv8.5-a", "Snapdragon", "oryon-1" },
     };
 
     static const cpu_vendor_t* find_cpu_vendor(u64 id)
@@ -164,7 +176,8 @@ namespace aarch64
             const auto part_info = find_cpu_part(implementer_id, part_id);
             if (!part_info)
             {
-                return {};
+                // Skip unrecognized core types instead of giving up on the whole (possibly heterogeneous) CPU
+                continue;
             }
 
             if (lowest_part_info == nullptr || lowest_part_info > part_info)

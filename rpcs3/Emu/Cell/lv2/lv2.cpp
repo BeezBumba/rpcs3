@@ -59,6 +59,7 @@
 #include "util/tsc.hpp"
 #include "util/sysinfo.hpp"
 #include "util/init_mutex.hpp"
+#include "util/asm.hpp"
 
 #if defined(ARCH_X64)
 #ifdef _MSC_VER
@@ -2219,12 +2220,24 @@ bool lv2_obj::wait_timeout(u64 usec, ppu_thread* cpu, bool scale, bool is_usleep
 					__mwaitx(us_in_tsc_clocks, 0xf0);
 				}
 			}
-#endif
 			else
 			{
 				// Try yielding. May cause long wake latency but helps weaker CPUs a lot by alleviating resource pressure
 				std::this_thread::yield();
 			}
+#elif defined(ARCH_ARM64)
+			else
+			{
+				// Power-efficient WFE wait instead of a full thread yield
+				utils::spin_on_cacheline_once(state, old_state, remaining);
+			}
+#else
+			else
+			{
+				// Try yielding. May cause long wake latency but helps weaker CPUs a lot by alleviating resource pressure
+				std::this_thread::yield();
+			}
+#endif
 		}
 
 		passed = get_system_time() - start_time;

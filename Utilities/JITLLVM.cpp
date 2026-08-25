@@ -1030,7 +1030,8 @@ const char * fallback_cpu_detection()
 	}
 
 #elif defined(ARCH_ARM64)
-#ifdef ANDROID
+#ifdef __linux__
+	// Covers desktop/server Linux too, not just Android: MIDR_EL1 is exposed via sysfs on any Linux kernel
 	static std::string s_result = []() -> std::string
 	{
 		std::string result = aarch64::get_cpu_name();
@@ -1045,9 +1046,7 @@ const char * fallback_cpu_detection()
 
 	return s_result.c_str();
 #else
-	// TODO: Read the data from /proc/cpuinfo. ARM CPU registers are not accessible from usermode.
-	// This will be a pain when supporting snapdragon on windows but we'll cross that bridge when we get there.
-	// Require at least armv8-2a. Older chips are going to be useless anyway.
+	// TODO: Windows on ARM has no known usermode-accessible path to MIDR_EL1 yet
 	return "cortex-a78";
 #endif
 #endif
